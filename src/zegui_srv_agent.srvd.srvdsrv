@@ -1,0 +1,5 @@
+@EndUserText.label: 'Test'
+define service Zegui_srv_agent {
+  expose ZEGUI_C_AGENT_HEADER as AgentHeader;
+  expose zegui_c_attchmnts    as Attachments;
+}

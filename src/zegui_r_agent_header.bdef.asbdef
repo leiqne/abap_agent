@@ -1,0 +1,62 @@
+managed implementation in class zbp_egui_r_agent_header unique;
+strict ( 2 );
+with draft;
+
+define behavior for zegui_r_agent_header alias Header
+persistent table zegui_agent_hdr
+draft table ZEGUI_AGNT_HDR_D
+lock master total etag ProcessedAt
+authorization master ( instance )
+//etag master <field_name>
+{
+
+  create ( authorization : global );
+  update;
+  delete;
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+
+  field ( readonly, numbering : managed ) Queryid;
+  field ( readonly ) ErrorMessage , LlmResponseString , ModelName , ProcessedAt , PromptString,QueryStatus;
+  association _attachment { create; with draft; }
+
+  mapping for zegui_agent_hdr {
+  Queryid = queryid;
+  QueryStatus = query_status;
+  PromptString = prompt_string;
+  ProcessedAt = processed_at;
+  ModelName = model_name;
+  LlmResponseString = llm_response_string ;
+  ErrorMessage = error_message;
+
+  }
+}
+
+define behavior for zegui_r_attchmnts alias Attachment
+persistent table zegui_attchmnts
+draft table zegui_attchts_d
+lock dependent by _header
+authorization dependent by _header
+//etag master <field_name>
+{
+  update;
+  delete;
+  field ( readonly, numbering:managed ) Attachmentid;
+  field ( readonly ) Queryid ;
+  association _header{ with draft; }
+
+  mapping for zegui_attchmnts {
+  Attachmentid = attachmentid;
+  Attachment = attachment;
+  DocumentType = document_type ;
+  FileName = file_name;
+  MimeType = mime_type;
+  Queryid = queryid;
+  }
+
+}
