@@ -19,6 +19,7 @@ define view entity zegui_c_attchmnts
   key Queryid,
 
       @UI.lineItem: [{  position: 10 }]
+      @EndUserText.label: 'Document Type'
       DocumentType,
 
       @Semantics.largeObject: {

@@ -4,7 +4,7 @@ with draft;
 
 define behavior for zegui_r_agent_header alias Header
 persistent table zegui_agent_hdr
-draft table ZEGUI_AGNT_HDR_D
+draft table zegui_agnt_hdr_d
 lock master total etag ProcessedAt
 authorization master ( instance )
 //etag master <field_name>
@@ -18,23 +18,29 @@ authorization master ( instance )
   draft action Activate optimized;
   draft action Discard;
   draft action Resume;
-  draft determine action Prepare;
+  draft determine action Prepare
+  {
+    validation Attachment~checknumberfiles;
+    validation attachment~checkfields;
+  }
 
 
   field ( readonly, numbering : managed ) Queryid;
-  field ( readonly ) ErrorMessage , LlmResponseString , ModelName , ProcessedAt , PromptString,QueryStatus;
-  association _attachment { create; with draft; }
+  field ( readonly ) ErrorMessage, LlmResponseString, ModelName, ProcessedAt, PromptString, QueryStatus;
+  association _attachment { create ( features : instance ); with draft; }
 
-  mapping for zegui_agent_hdr {
-  Queryid = queryid;
-  QueryStatus = query_status;
-  PromptString = prompt_string;
-  ProcessedAt = processed_at;
-  ModelName = model_name;
-  LlmResponseString = llm_response_string ;
-  ErrorMessage = error_message;
+  //validation
 
-  }
+  mapping for zegui_agent_hdr
+    {
+      Queryid           = queryid;
+      QueryStatus       = query_status;
+      PromptString      = prompt_string;
+      ProcessedAt       = processed_at;
+      ModelName         = model_name;
+      LlmResponseString = llm_response_string;
+      ErrorMessage      = error_message;
+    }
 }
 
 define behavior for zegui_r_attchmnts alias Attachment
@@ -46,17 +52,27 @@ authorization dependent by _header
 {
   update;
   delete;
-  field ( readonly, numbering:managed ) Attachmentid;
-  field ( readonly ) Queryid ;
-  association _header{ with draft; }
 
-  mapping for zegui_attchmnts {
-  Attachmentid = attachmentid;
-  Attachment = attachment;
-  DocumentType = document_type ;
-  FileName = file_name;
-  MimeType = mime_type;
-  Queryid = queryid;
-  }
+  field ( readonly, numbering : managed ) Attachmentid;
+  field ( readonly ) Queryid;
+  field ( mandatory : create ) DocumentType;
+  association _header { with draft; }
+
+  //validation
+  validation checkNumberFiles on save { create; }
+  validation checkfields on save { create; update; }
+
+  //determination
+  determination sendImageGem on save { create; update; }
+
+  mapping for zegui_attchmnts
+    {
+      Attachmentid = attachmentid;
+      Attachment   = attachment;
+      DocumentType = document_type;
+      FileName     = file_name;
+      MimeType     = mime_type;
+      Queryid      = queryid;
+    }
 
 }
