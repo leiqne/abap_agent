@@ -18,9 +18,22 @@ define view entity zegui_c_attchmnts
       @UI.hidden: true
   key Queryid,
 
-      @UI.lineItem: [{  position: 10 }]
+      //@UI.lineItem: [{  position: 10 }]
       @EndUserText.label: 'Document Type'
+      @Consumption.valueHelpDefinition : [{ 
+      entity: { name: 'zegui_i_doc_type', element: 'DocTypeId' },
+      additionalBinding: [{ 
+      localElement: 'DocumentType',
+      element: 'DocTypeId',
+      usage: #RESULT
+       }]
+       }]
+      @ObjectModel.text.association: '_DocType'
       DocumentType,
+      
+      @UI.lineItem: [{ position: 10 , label : 'Document Type' }]
+      @EndUserText.label: 'Document Type'
+      _DocType.DocumentTypeName as DocumentTypeText,
 
       @Semantics.largeObject: {
       mimeType: 'MimeType',
@@ -37,8 +50,10 @@ define view entity zegui_c_attchmnts
       MimeType,
 
       @UI.lineItem: [{ position : 20 }] 
+      @EndUserText.label: 'File name'
       FileName,
 
       /* Associations */
       _header : redirected to parent ZEGUI_C_AGENT_HEADER
+      ,_DocType
 }

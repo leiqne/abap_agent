@@ -1,6 +1,6 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'TRansactional view attachments'
-@Metadata.ignorePropagatedAnnotations: true
+@Metadata.ignorePropagatedAnnotations: false
 
 define  view entity zegui_r_attchmnts
   as select from zegui_i_attchmnts
@@ -13,5 +13,6 @@ on $projection.Queryid = _header.Queryid
     Attachment,
     MimeType,
     FileName,
-    _header
+    _header,
+    _DocType
 }

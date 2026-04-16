@@ -19,18 +19,22 @@ provider contract transactional_query
     @UI.identification: [{ position : 5 }]
     key Queryid,
     
-    @UI.lineItem: [{ position : 10 }] 
-    @UI.identification: [{ position : 10 }]
-    PromptString,
-    
+//    @UI.lineItem: [{ position : 10 }] 
+//    @UI.identification: [{ position : 10 }]
+//    @EndUserText.label: 'Prompt to LLM'
+//    PromptString,
+
     @UI.lineItem: [{ position : 15 }]
-    @UI.identification: [{ position : 15 }]
+    @UI.identification: [{ position : 15, importance :#HIGH },
+                         { type  : #FOR_ACTION, dataAction: 'sendToLlm', label : 'Send BO to llm'  }    ]
+    @EndUserText.label: 'LLM response'
     LlmResponseString,
     ModelName,
     
     @UI.lineItem: [{ position : 20 }]
     @UI.identification: [{ position : 20  }]
-    @UI.selectionField: [{ position :20 }] 
+    @UI.selectionField: [{ position :20 }]
+    @EndUserText.label: 'Status of prompt' 
     QueryStatus,
     
     @UI.lineItem: [{ position :  25 }]

@@ -1,5 +1,0 @@
-CLASS zbp_egui_r_attchmnts DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zegui_r_attchmnts.
-ENDCLASS.
-
-CLASS zbp_egui_r_attchmnts IMPLEMENTATION.
-ENDCLASS.

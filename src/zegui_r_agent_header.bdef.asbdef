@@ -1,4 +1,4 @@
-managed implementation in class zbp_egui_r_agent_header unique;
+managed with additional save implementation in class zbp_egui_r_agent_header unique;
 strict ( 2 );
 with draft;
 
@@ -24,6 +24,8 @@ authorization master ( instance )
     validation attachment~checkfields;
   }
 
+
+  action ( features : instance ) sendToLlm result [1] $self ;
 
   field ( readonly, numbering : managed ) Queryid;
   field ( readonly ) ErrorMessage, LlmResponseString, ModelName, ProcessedAt, PromptString, QueryStatus;
@@ -57,19 +59,18 @@ authorization dependent by _header
   field ( readonly ) Queryid;
   field ( mandatory : create ) DocumentType;
   association _header { with draft; }
-
   //validation
   validation checkNumberFiles on save { create; }
   validation checkfields on save { create; update; }
 
   //determination
-  determination sendImageGem on save { create; update; }
+  //determination sendImageGem on save { create; update; }
 
   mapping for zegui_attchmnts
     {
       Attachmentid = attachmentid;
       Attachment   = attachment;
-      DocumentType = document_type;
+      DocumentType = doc_type_id;
       FileName     = file_name;
       MimeType     = mime_type;
       Queryid      = queryid;
