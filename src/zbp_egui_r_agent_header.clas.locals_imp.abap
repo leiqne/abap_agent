@@ -12,6 +12,26 @@ CLASS lsc_zegui_r_agent_header IMPLEMENTATION.
 
     LOOP AT update-header ASSIGNING FIELD-SYMBOL(<ls_upd>) WHERE %control-QueryStatus = if_abap_behv=>mk-on AND QueryStatus = 'P' .
 
+      READ ENTITIES OF zegui_r_agent_header IN LOCAL MODE
+      ENTITY header
+      FIELDS ( QueryStatus )
+      WITH VALUE #(
+        ( Queryid = <ls_upd>-Queryid )
+      )
+      RESULT DATA(lt_header).
+
+      DATA(lv_current_status) = VALUE #( lt_header[ 1 ]-QueryStatus OPTIONAL ).
+
+*      IF sy-subrc = 0 AND lv_current_status = 'P'.
+*        APPEND VALUE #(
+*          %key = <ls_upd>-%key
+*          %msg = new_message_with_text(
+*            severity = if_abap_behv_message=>severity-information
+*            text = 'Query already in process queue' )
+*        ) TO reported-header.
+*        CONTINUE.
+*      ENDIF.
+
       TRY.
 
 
@@ -29,7 +49,21 @@ CLASS lsc_zegui_r_agent_header IMPLEMENTATION.
      ) TO reported-header.
 
 
-        CATCH cx_root INTO DATA(lx).
+        CATCH cx_bgmc_operation  INTO DATA(lx_bgmc).
+          APPEND VALUE #(
+            %key = <ls_upd>-%key
+            %msg = new_message_with_text(
+              severity = if_abap_behv_message=>severity-error
+              text = |BGMC Error: { lx_bgmc->get_text( ) }| )
+          ) TO reported-header.
+
+        CATCH cx_root INTO DATA(lx_root).
+          APPEND VALUE #(
+            %key = <ls_upd>-%key
+            %msg = new_message_with_text(
+              severity = if_abap_behv_message=>severity-error
+              text = |Error: { lx_root->get_text( ) }| )
+          ) TO reported-header.
       ENDTRY.
 
     ENDLOOP.
@@ -160,7 +194,10 @@ CLASS lhc_Header IMPLEMENTATION.
                                                    THEN if_abap_behv=>fc-o-disabled
                                                    ELSE if_abap_behv=>fc-o-enabled   )
                       "for action send to llm
-                      %action-sendtollm = COND #( WHEN header-llmresponsestring IS INITIAL AND line_exists( lt_attchmnt[  Queryid = header-Queryid ] )
+                      %action-sendtollm = COND #(
+                                                 WHEN header-QueryStatus = 'E'
+                                                    THEN if_abap_behv=>fc-o-enabled
+                                                  WHEN ( header-QueryStatus = 'E' OR header-QueryStatus IS INITIAL ) AND header-llmresponsestring IS INITIAL AND line_exists( lt_attchmnt[  Queryid = header-Queryid ]  )
                                                   THEN   if_abap_behv=>fc-o-enabled
                                                   ELSE if_abap_behv=>fc-o-disabled )
                                                    ) ).
@@ -205,15 +242,15 @@ CLASS lhc_Header IMPLEMENTATION.
       IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
+      IF <ls_header>-QueryStatus <> 'P'.
+        IF <ls_header>-LlmResponseString IS INITIAL .
+          "then call to llm
 
-      IF <ls_header>-LlmResponseString IS INITIAL .
-        "then call to llm
-
-        MODIFY ENTITIES OF zegui_r_agent_header IN LOCAL MODE
-        ENTITY header
-        UPDATE FIELDS ( QueryStatus ) WITH VALUE #( (  %tky = <ls_key>-%tky QueryStatus = 'P' ) )
-        FAILED failed
-        REPORTED reported.
+          MODIFY ENTITIES OF zegui_r_agent_header IN LOCAL MODE
+          ENTITY header
+          UPDATE FIELDS ( QueryStatus ) WITH VALUE #( (  %tky = <ls_key>-%tky QueryStatus = 'P' ) )
+          FAILED failed
+          REPORTED reported.
 
 *        try.
 **            cl_bgmc_process_factory=>get_default(
@@ -236,20 +273,23 @@ CLASS lhc_Header IMPLEMENTATION.
 *       %action-sendToLlm = if_abap_behv=>mk-on
 *       ) TO reported-header.
 
-        APPEND VALUE #( %tky = <ls_key>-%tky
-                        %param-queryid  = <ls_key>-Queryid
-                              ) TO result.
+          APPEND VALUE #( %tky = <ls_key>-%tky
+                          %param-queryid  = <ls_key>-Queryid
+                                ) TO result.
 
-      ELSE .
-        APPEND VALUE #( %tky = <ls_key>-%tky ) TO failed-header.
+        ELSE .
+          APPEND VALUE #( %tky = <ls_key>-%tky ) TO failed-header.
+          APPEND VALUE #( %tky = <ls_key>-%tky
+                          %msg = new_message_with_text(
+                          severity = if_abap_behv_message=>severity-error
+                          text = 'BO Already have a response' )
+                          %action-sendToLlm = if_abap_behv=>mk-on ) TO reported-header.
+        ENDIF.
+      ELSE.
         APPEND VALUE #( %tky = <ls_key>-%tky
-                        %msg = new_message_with_text(
-                        severity = if_abap_behv_message=>severity-error
-                        text = 'BO Already have a response' )
-                        %action-sendToLlm = if_abap_behv=>mk-on ) TO reported-header.
+                          %param-queryid  = <ls_key>-Queryid
+                                ) TO result.
       ENDIF.
-
-
     ENDLOOP.
   ENDMETHOD.
 
